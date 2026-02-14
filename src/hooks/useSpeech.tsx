@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import 'regenerator-runtime/runtime';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
 
 declare global {
@@ -52,7 +52,6 @@ const useSpeech = (textareaRef: React.RefObject<HTMLTextAreaElement | null>) => 
     inputValueRef.current = value;
     cursorPosition.current = textareaRef.current?.selectionStart || 0;
 
-    console.log({ cursorPosition: cursorPosition.current });
     // cursorPosition.current = value.length + 1;
     resetTranscript();
   };
@@ -97,8 +96,9 @@ const useSpeech = (textareaRef: React.RefObject<HTMLTextAreaElement | null>) => 
     [transcriptValue]
   );
 
-  const { transcript, listening, resetTranscript, browserSupportsSpeechRecognition } =
-    useSpeechRecognition({ commands });
+  const { transcript, resetTranscript, browserSupportsSpeechRecognition } = useSpeechRecognition({
+    commands
+  });
 
   if (!browserSupportsSpeechRecognition) {
     console.error('Speech recognition is not supported in this browser');
@@ -115,8 +115,6 @@ const useSpeech = (textareaRef: React.RefObject<HTMLTextAreaElement | null>) => 
     }
 
     if (event.ctrlKey && event.key === TOGGLE_KEY) {
-      console.log({ e: event.key });
-
       event.preventDefault();
       if (listeningRef.current) {
         console.log('stop listening');
@@ -136,10 +134,7 @@ const useSpeech = (textareaRef: React.RefObject<HTMLTextAreaElement | null>) => 
   };
 
   const handleTextareaClick = () => {
-    cursorPosition.current = textareaRef.current?.selectionStart || 0;
-
-    inputValueRef.current = textareaRef.current?.value || '';
-    resetTranscript();
+    initForSpeech();
   };
 
   const initForSpeech = () => {
@@ -155,16 +150,17 @@ const useSpeech = (textareaRef: React.RefObject<HTMLTextAreaElement | null>) => 
 
   useEffect(() => {
     if (transcriptValue) {
-      console.log({
-        transcriptValue,
-        cursorPosition: cursorPosition.current,
-        inputValueRef: inputValueRef.current
-      });
+      // console.log({
+      //   transcriptValue,
+      //   inputValueRef: inputValueRef.current
+      // });
+
+      const currentCursorPosition = cursorPosition.current;
 
       const value = `${inputValueRef.current.substring(
         0,
-        cursorPosition.current
-      )} ${transcriptValue} ${inputValueRef.current.substring(cursorPosition.current)}`;
+        currentCursorPosition
+      )} ${transcriptValue} ${inputValueRef.current.substring(currentCursorPosition)}`;
 
       setInputValue(value);
     }
