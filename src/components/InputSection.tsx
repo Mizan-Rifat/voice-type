@@ -1,4 +1,4 @@
-import { Mic, XIcon } from 'lucide-react';
+import { Mic, MicOff, XIcon } from 'lucide-react';
 import { useRef } from 'react';
 import useSpeech from '../hooks/useSpeech';
 import DisplaySection from './DisplaySection';
@@ -6,8 +6,15 @@ import DisplaySection from './DisplaySection';
 const InputSection = () => {
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
-  const { startListening, stopListening, inputValue, handleTyping, isListening } =
-    useSpeech(textareaRef);
+  const {
+    startListening,
+    stopListening,
+    inputValue,
+    handleTyping,
+    isListening,
+    micPermissionError,
+    browserSupportsSpeechRecognition
+  } = useSpeech(textareaRef);
 
   const toggleListening = () => {
     if (isListening) {
@@ -25,6 +32,7 @@ const InputSection = () => {
           relative flex items-center w-full bg-white rounded-3xl shadow-lg border border-gray-200 
           transition-all duration-300 ease-in-out hover:shadow-xl focus-within:shadow-2xl focus-within:border-blue-300
           ${isListening ? 'ring-4 ring-blue-100 border-blue-400' : ''}
+          ${micPermissionError ? 'border-red-300' : ''}
       `}
         >
           <textarea
@@ -38,23 +46,34 @@ const InputSection = () => {
           />
 
           <div className="flex self-end pr-4 py-4 gap-2">
-            <button
-              onClick={toggleListening}
-              className={`
-              p-3 rounded-full transition-all duration-300 relative cursor-pointer
-              ${
-                isListening
-                  ? 'bg-red-500 text-white hover:bg-red-600 animate-pulse shadow-md'
-                  : 'hover:bg-gray-100 text-gray-500 hover:text-blue-600'
-              }
-            `}
-              title="Voice Input"
-            >
-              <Mic size={20} />
-              {isListening && (
-                <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-400 rounded-full animate-ping" />
-              )}
-            </button>
+            {!browserSupportsSpeechRecognition ? (
+              <div
+                className="p-3 rounded-full text-gray-300 cursor-not-allowed"
+                title="Speech recognition is not supported in this browser"
+              >
+                <MicOff size={20} />
+              </div>
+            ) : (
+              <button
+                onClick={toggleListening}
+                className={`
+                p-3 rounded-full transition-all duration-300 relative cursor-pointer
+                ${
+                  isListening
+                    ? 'bg-red-500 text-white hover:bg-red-600 animate-pulse shadow-md'
+                    : micPermissionError
+                      ? 'bg-red-50 text-red-400 hover:bg-red-100'
+                      : 'hover:bg-gray-100 text-gray-500 hover:text-blue-600'
+                }
+              `}
+                title={micPermissionError ? micPermissionError : 'Voice Input'}
+              >
+                <Mic size={20} />
+                {isListening && (
+                  <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-400 rounded-full animate-ping" />
+                )}
+              </button>
+            )}
 
             <button
               onClick={() => handleTyping('')}
@@ -66,6 +85,10 @@ const InputSection = () => {
             </button>
           </div>
         </div>
+
+        {micPermissionError && (
+          <p className="mt-2 px-4 text-sm text-red-500">{micPermissionError}</p>
+        )}
       </div>
       <DisplaySection text={inputValue} />
     </>

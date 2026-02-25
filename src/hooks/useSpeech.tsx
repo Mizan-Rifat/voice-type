@@ -21,17 +21,43 @@ const useSpeech = (textareaRef: React.RefObject<HTMLTextAreaElement | null>) => 
   const inputValueRef = useRef<string>('');
 
   const [transcriptValue, setTranscriptValue] = useState('');
+  const [micPermissionError, setMicPermissionError] = useState<string | null>(null);
 
   const cursorPosition = useRef(0);
+  const micStreamRef = useRef<MediaStream | null>(null);
 
   const startListening = async () => {
+    setMicPermissionError(null);
+
+    try {
+      if (!micStreamRef.current) {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        micStreamRef.current = stream;
+      }
+    } catch (err) {
+      const isDenied =
+        err instanceof DOMException &&
+        (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError');
+      setMicPermissionError(
+        isDenied
+          ? 'Microphone access was denied. Please allow microphone access in your browser settings.'
+          : 'Could not access microphone. Please check your browser settings.'
+      );
+      console.error('Microphone permission error:', err);
+      return;
+    }
+
     setIsListening(true);
     listeningRef.current = true;
     textareaRef.current?.focus();
 
     cursorPosition.current = textareaRef.current?.selectionStart || 0;
 
-    SpeechRecognition.startListening({ language: 'en-US', continuous: true });
+    try {
+      SpeechRecognition.startListening({ language: 'en-US', continuous: true });
+    } catch (error) {
+      console.error('Error starting listening:', error);
+    }
   };
 
   const stopListening = () => {
@@ -45,6 +71,11 @@ const useSpeech = (textareaRef: React.RefObject<HTMLTextAreaElement | null>) => 
     SpeechRecognition.abortListening();
     resetTranscript();
     SpeechRecognition.stopListening();
+
+    if (micStreamRef.current) {
+      micStreamRef.current.getTracks().forEach(track => track.stop());
+      micStreamRef.current = null;
+    }
   };
 
   const handleTyping = (value: string) => {
@@ -60,7 +91,7 @@ const useSpeech = (textareaRef: React.RefObject<HTMLTextAreaElement | null>) => 
     () => [
       {
         command: 'clear all',
-        callback: ({ resetTranscript }: any) => {
+        callback: ({ resetTranscript }: { resetTranscript: () => void }) => {
           setInputValue('');
           setTranscriptValue('');
           resetTranscript();
@@ -205,7 +236,9 @@ const useSpeech = (textareaRef: React.RefObject<HTMLTextAreaElement | null>) => 
     inputValue,
     handleTyping,
     textareaRef,
-    isListening
+    isListening,
+    micPermissionError,
+    browserSupportsSpeechRecognition
   };
 };
 
