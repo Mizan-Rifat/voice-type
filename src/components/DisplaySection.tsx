@@ -1,4 +1,4 @@
-import { Copy, Check, Terminal, Loader2 } from 'lucide-react';
+import { Copy, Check, Terminal, Loader2, Sparkles } from 'lucide-react';
 import { useState } from 'react';
 
 interface DisplaySectionProps {
@@ -6,6 +6,9 @@ interface DisplaySectionProps {
   isLoading?: boolean;
   error?: string | null;
   showPlaceholder?: boolean;
+  onRewrite?: () => void;
+  canRewrite?: boolean;
+  promptTitle?: string;
 }
 
 const DisplaySection = ({
@@ -13,6 +16,9 @@ const DisplaySection = ({
   isLoading = false,
   error = null,
   showPlaceholder = false,
+  onRewrite,
+  canRewrite = false,
+  promptTitle = 'AI',
 }: DisplaySectionProps) => {
   const [copied, setCopied] = useState(false);
 
@@ -30,9 +36,22 @@ const DisplaySection = ({
   return (
     <div className="w-full max-w-2xl mt-8 animate-[fadeIn_0.5s_ease-out]">
       <div className="relative group bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-all duration-300">
-        {text && !isLoading && (
-          <div className="absolute top-4 right-4 print:hidden">
+        <div className="absolute top-4 right-4 flex items-center gap-2 print:hidden">
+          {onRewrite && (
             <button
+              type="button"
+              onClick={onRewrite}
+              disabled={!canRewrite}
+              className="p-2 rounded-lg transition-all duration-200 flex items-center gap-2 text-sm font-medium bg-gray-100 text-gray-600 hover:bg-purple-50 hover:text-purple-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              title={`Rewrite with ${promptTitle}`}
+            >
+              <Sparkles size={16} className={isLoading ? 'animate-pulse' : ''} />
+              <span>Rewrite</span>
+            </button>
+          )}
+          {text && !isLoading && (
+            <button
+              type="button"
               onClick={handleCopy}
               className={`p-2 rounded-lg transition-all duration-200 flex items-center gap-2 text-sm font-medium
                 ${
@@ -55,8 +74,8 @@ const DisplaySection = ({
                 </>
               )}
             </button>
-          </div>
-        )}
+          )}
+        </div>
 
         <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-2">
           <Terminal size={14} />
@@ -82,7 +101,7 @@ const DisplaySection = ({
 
         {showPlaceholder && (
           <p className="text-gray-400 text-base leading-relaxed">
-            Type or speak — your text will appear here. Use the sparkles button to rewrite with AI.
+            Type or speak — your text will appear here. Use Rewrite to transform it with AI.
           </p>
         )}
       </div>

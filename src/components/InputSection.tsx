@@ -1,4 +1,4 @@
-import { Mic, MicOff, Sparkles, XIcon } from 'lucide-react';
+import { Mic, MicOff, Send, XIcon } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import type { Prompt } from '../data/prompts';
 import useRewrite from '../hooks/useRewrite';
@@ -7,9 +7,11 @@ import DisplaySection from './DisplaySection';
 
 interface InputSectionProps {
   selectedPrompt: Prompt;
+  onSubmit: (originalText: string) => void;
+  onRewriteComplete: (originalText: string, rewrittenText: string, promptTitle: string) => void;
 }
 
-const InputSection = ({ selectedPrompt }: InputSectionProps) => {
+const InputSection = ({ selectedPrompt, onSubmit, onRewriteComplete }: InputSectionProps) => {
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   const {
@@ -22,6 +24,8 @@ const InputSection = ({ selectedPrompt }: InputSectionProps) => {
     browserSupportsSpeechRecognition,
     handleTextareaFocus,
     handleTextareaBlur,
+    focusStartsListening,
+    setFocusStartsListening,
   } = useSpeech(textareaRef);
 
   const { output, isGenerating, error, rewrite, reset } = useRewrite();
@@ -38,8 +42,16 @@ const InputSection = ({ selectedPrompt }: InputSectionProps) => {
     }
   };
 
-  const handleRewrite = () => {
-    rewrite(inputValue, selectedPrompt.prompt);
+  const handleRewrite = async () => {
+    const result = await rewrite(inputValue, selectedPrompt.prompt);
+    if (result) {
+      onRewriteComplete(inputValue, result, selectedPrompt.title);
+    }
+  };
+
+  const handleSubmit = () => {
+    if (!inputValue.trim()) return;
+    onSubmit(inputValue);
   };
 
   const displayText = output || inputValue;
@@ -67,13 +79,13 @@ const InputSection = ({ selectedPrompt }: InputSectionProps) => {
             style={{ minHeight: '60px', maxHeight: '300px' }}
           />
 
-          <div className="flex self-end pr-4 py-4 gap-2">
+          <div className="flex self-end pr-3 py-3 gap-1">
             {!browserSupportsSpeechRecognition ? (
               <div
-                className="p-3 rounded-full text-gray-300 cursor-not-allowed"
+                className="p-2 rounded-full text-gray-300 cursor-not-allowed"
                 title="Speech recognition is not supported in this browser"
               >
-                <MicOff size={20} />
+                <MicOff size={16} />
               </div>
             ) : (
               <button
@@ -81,7 +93,7 @@ const InputSection = ({ selectedPrompt }: InputSectionProps) => {
                 onMouseDown={e => e.preventDefault()}
                 onClick={toggleListening}
                 className={`
-                p-3 rounded-full transition-all duration-300 relative cursor-pointer
+                p-2 rounded-full transition-all duration-300 relative cursor-pointer
                 ${
                   isListening
                     ? 'bg-red-500 text-white hover:bg-red-600 animate-pulse shadow-md'
@@ -92,9 +104,9 @@ const InputSection = ({ selectedPrompt }: InputSectionProps) => {
               `}
                 title={micPermissionError ? micPermissionError : 'Voice Input'}
               >
-                <Mic size={20} />
+                <Mic size={16} />
                 {isListening && (
-                  <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-400 rounded-full animate-ping" />
+                  <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-red-400 rounded-full animate-ping" />
                 )}
               </button>
             )}
@@ -102,26 +114,38 @@ const InputSection = ({ selectedPrompt }: InputSectionProps) => {
             <button
               type="button"
               onMouseDown={e => e.preventDefault()}
-              onClick={handleRewrite}
-              disabled={!inputValue.trim() || isGenerating}
-              className="p-3 rounded-full transition-all duration-300 text-gray-500 hover:bg-purple-50 hover:text-purple-600 disabled:opacity-50 disabled:cursor-not-allowed"
-              title={`Rewrite with ${selectedPrompt.title}`}
+              onClick={handleSubmit}
+              disabled={!inputValue.trim()}
+              className="p-2 rounded-full transition-all duration-300 text-gray-500 hover:bg-green-50 hover:text-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Submit to history"
             >
-              <Sparkles size={20} className={isGenerating ? 'animate-pulse' : ''} />
+              <Send size={16} />
             </button>
 
             <button
               type="button"
               onMouseDown={e => e.preventDefault()}
               onClick={() => handleTyping('')}
-              className="p-3 text-red-500 hover:bg-red-50 rounded-full transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-2 text-red-500 hover:bg-red-50 rounded-full transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={!inputValue.trim()}
               title="Clear"
             >
-              <XIcon size={20} />
+              <XIcon size={16} />
             </button>
           </div>
         </div>
+
+        {browserSupportsSpeechRecognition && (
+          <label className="mt-2 px-4 flex items-center gap-2 text-sm text-gray-500 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={focusStartsListening}
+              onChange={e => setFocusStartsListening(e.target.checked)}
+              className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+            />
+            Start listening when the textarea is focused
+          </label>
+        )}
 
         {micPermissionError && (
           <p className="mt-2 px-4 text-sm text-red-500">{micPermissionError}</p>
@@ -132,6 +156,9 @@ const InputSection = ({ selectedPrompt }: InputSectionProps) => {
         isLoading={isGenerating}
         error={error}
         showPlaceholder={!displayText && !isGenerating && !error}
+        onRewrite={handleRewrite}
+        canRewrite={!!inputValue.trim() && !isGenerating}
+        promptTitle={selectedPrompt.title}
       />
     </>
   );

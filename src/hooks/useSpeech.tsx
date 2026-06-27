@@ -17,6 +17,8 @@ const useSpeech = (textareaRef: React.RefObject<HTMLTextAreaElement | null>) => 
   const [isListening, setIsListening] = useState(false);
   const listeningRef = useRef<boolean>(false);
 
+  const [focusStartsListening, setFocusStartsListening] = useState(true);
+
   const [inputValue, setInputValue] = useState('');
   const inputValueRef = useRef<string>('');
 
@@ -179,7 +181,7 @@ const useSpeech = (textareaRef: React.RefObject<HTMLTextAreaElement | null>) => 
 
   const handleTextareaFocus = () => {
     initForSpeech();
-    if (browserSupportsSpeechRecognition) {
+    if (browserSupportsSpeechRecognition && focusStartsListening) {
       startListening();
     }
   };
@@ -254,6 +256,8 @@ const useSpeech = (textareaRef: React.RefObject<HTMLTextAreaElement | null>) => 
     browserSupportsSpeechRecognition,
     handleTextareaFocus,
     handleTextareaBlur,
+    focusStartsListening,
+    setFocusStartsListening,
   };
 };
 
