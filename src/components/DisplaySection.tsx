@@ -5,7 +5,7 @@ interface DisplaySectionProps {
   text: string;
 }
 
-export default function DisplaySection({ text }: DisplaySectionProps) {
+const DisplaySection = ({ text }: DisplaySectionProps) => {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -59,4 +59,6 @@ export default function DisplaySection({ text }: DisplaySectionProps) {
       </div>
     </div>
   );
-}
+};
+
+export default DisplaySection;

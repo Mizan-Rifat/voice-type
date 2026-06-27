@@ -1,4 +1,4 @@
-export default function VoiceTypeLogo() {
+const VoiceTypeLogo = () => {
   return (
     <div className="flex flex-col items-center mb-10 select-none">
       <div className="relative mb-4 group cursor-pointer transition-transform hover:scale-105 duration-300">
@@ -56,4 +56,6 @@ export default function VoiceTypeLogo() {
       </h1>
     </div>
   );
-}
+};
+
+export default VoiceTypeLogo;
