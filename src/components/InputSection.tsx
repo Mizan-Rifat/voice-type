@@ -1,9 +1,15 @@
-import { Mic, MicOff, XIcon } from 'lucide-react';
-import { useRef } from 'react';
+import { Mic, MicOff, Sparkles, XIcon } from 'lucide-react';
+import { useEffect, useRef } from 'react';
+import type { Prompt } from '../data/prompts';
+import useRewrite from '../hooks/useRewrite';
 import useSpeech from '../hooks/useSpeech';
 import DisplaySection from './DisplaySection';
 
-const InputSection = () => {
+interface InputSectionProps {
+  selectedPrompt: Prompt;
+}
+
+const InputSection = ({ selectedPrompt }: InputSectionProps) => {
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   const {
@@ -13,8 +19,16 @@ const InputSection = () => {
     handleTyping,
     isListening,
     micPermissionError,
-    browserSupportsSpeechRecognition
+    browserSupportsSpeechRecognition,
+    handleTextareaFocus,
+    handleTextareaBlur,
   } = useSpeech(textareaRef);
+
+  const { output, isGenerating, error, rewrite, reset } = useRewrite();
+
+  useEffect(() => {
+    reset();
+  }, [inputValue, reset]);
 
   const toggleListening = () => {
     if (isListening) {
@@ -23,6 +37,12 @@ const InputSection = () => {
       startListening();
     }
   };
+
+  const handleRewrite = () => {
+    rewrite(inputValue, selectedPrompt.prompt);
+  };
+
+  const displayText = output || inputValue;
 
   return (
     <>
@@ -39,6 +59,8 @@ const InputSection = () => {
             ref={textareaRef}
             value={inputValue}
             onChange={e => handleTyping(e.target.value)}
+            onFocus={handleTextareaFocus}
+            onBlur={handleTextareaBlur}
             placeholder="Start typing or speaking..."
             rows={1}
             className="w-full py-4 px-4 text-lg text-gray-700 bg-transparent outline-none resize-none overflow-hidden placeholder-gray-400"
@@ -55,6 +77,8 @@ const InputSection = () => {
               </div>
             ) : (
               <button
+                type="button"
+                onMouseDown={e => e.preventDefault()}
                 onClick={toggleListening}
                 className={`
                 p-3 rounded-full transition-all duration-300 relative cursor-pointer
@@ -76,6 +100,19 @@ const InputSection = () => {
             )}
 
             <button
+              type="button"
+              onMouseDown={e => e.preventDefault()}
+              onClick={handleRewrite}
+              disabled={!inputValue.trim() || isGenerating}
+              className="p-3 rounded-full transition-all duration-300 text-gray-500 hover:bg-purple-50 hover:text-purple-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              title={`Rewrite with ${selectedPrompt.title}`}
+            >
+              <Sparkles size={20} className={isGenerating ? 'animate-pulse' : ''} />
+            </button>
+
+            <button
+              type="button"
+              onMouseDown={e => e.preventDefault()}
               onClick={() => handleTyping('')}
               className="p-3 text-red-500 hover:bg-red-50 rounded-full transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={!inputValue.trim()}
@@ -90,7 +127,12 @@ const InputSection = () => {
           <p className="mt-2 px-4 text-sm text-red-500">{micPermissionError}</p>
         )}
       </div>
-      <DisplaySection text={inputValue} />
+      <DisplaySection
+        text={displayText}
+        isLoading={isGenerating}
+        error={error}
+        showPlaceholder={!displayText && !isGenerating && !error}
+      />
     </>
   );
 };

@@ -27,6 +27,8 @@ const useSpeech = (textareaRef: React.RefObject<HTMLTextAreaElement | null>) => 
   const micStreamRef = useRef<MediaStream | null>(null);
 
   const startListening = async () => {
+    if (listeningRef.current) return;
+
     setMicPermissionError(null);
 
     try {
@@ -175,6 +177,17 @@ const useSpeech = (textareaRef: React.RefObject<HTMLTextAreaElement | null>) => 
     inputValueRef.current = textareaRef.current?.value || '';
   };
 
+  const handleTextareaFocus = () => {
+    initForSpeech();
+    if (browserSupportsSpeechRecognition) {
+      startListening();
+    }
+  };
+
+  const handleTextareaBlur = () => {
+    stopListening();
+  };
+
   useEffect(() => {
     setTranscriptValue(transcript);
   }, [transcript]);
@@ -238,7 +251,9 @@ const useSpeech = (textareaRef: React.RefObject<HTMLTextAreaElement | null>) => 
     textareaRef,
     isListening,
     micPermissionError,
-    browserSupportsSpeechRecognition
+    browserSupportsSpeechRecognition,
+    handleTextareaFocus,
+    handleTextareaBlur,
   };
 };
 
