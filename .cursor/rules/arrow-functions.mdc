@@ -1,0 +1,50 @@
+---
+description: Prefer arrow functions over function declarations
+globs: **/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Arrow Functions
+
+Use arrow functions for all function definitions. Do not use `function` declarations.
+
+## Components
+
+```tsx
+// ❌ BAD
+function App() {
+  return <div />;
+}
+
+export default function Layout({ children }: LayoutProps) {
+  return <main>{children}</main>;
+}
+
+// ✅ GOOD
+const App = () => {
+  return <div />;
+};
+
+const Layout = ({ children }: LayoutProps) => {
+  return <main>{children}</main>;
+};
+
+export default Layout;
+```
+
+## Handlers, hooks, and utilities
+
+```tsx
+// ❌ BAD
+function handleClick() {}
+export function formatText(value: string) {}
+
+// ✅ GOOD
+const handleClick = () => {};
+const formatText = (value: string) => {};
+```
+
+## Exceptions
+
+- Do not refactor third-party config callbacks unless editing that file for other reasons.
+- Generator functions (`function*`) may use `function` syntax when required.
