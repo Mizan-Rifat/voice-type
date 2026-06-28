@@ -1,59 +1,29 @@
-import { useState } from 'react';
-import CleanLayout from './components/Layout';
-import VoiceTypeLogo from './components/VoiceTypeLogo';
-import InputSection from './components/InputSection';
-import HistorySidebar from './components/HistorySidebar';
-import Sidebar from './components/Sidebar';
-import { PROMPTS } from './data/prompts';
-import useHistory from './hooks/useHistory';
+import { Loader2 } from 'lucide-react';
+import { useAuth } from './context/auth-context';
+import Login from './components/Login';
+import UpdatePassword from './components/UpdatePassword';
+import Workspace from './components/Workspace';
 
 const App = () => {
-  const [selectedPromptId, setSelectedPromptId] = useState(PROMPTS[0].id);
-  const [sidebarExpanded, setSidebarExpanded] = useState(true);
-  const [historySidebarExpanded, setHistorySidebarExpanded] = useState(true);
+  const { user, loading, isRecovery } = useAuth();
 
-  const { entries, submitEntry, addRewriteItem, deleteItem, deleteEntry } = useHistory();
+  if (loading) {
+    return (
+      <div className="flex min-h-screen w-full items-center justify-center bg-gradient-to-br from-gray-50 to-blue-50">
+        <Loader2 size={32} className="animate-spin text-blue-600" />
+      </div>
+    );
+  }
 
-  const selectedPrompt = PROMPTS.find(prompt => prompt.id === selectedPromptId) ?? PROMPTS[0];
+  if (isRecovery) {
+    return <UpdatePassword />;
+  }
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
-      <CleanLayout
-        sidebarExpanded={sidebarExpanded}
-        historySidebarExpanded={historySidebarExpanded}
-        sidebar={
-          <Sidebar
-            prompts={PROMPTS}
-            selectedId={selectedPromptId}
-            onSelect={setSelectedPromptId}
-            isExpanded={sidebarExpanded}
-            onExpandedChange={setSidebarExpanded}
-          />
-        }
-        rightSidebar={
-          <HistorySidebar
-            entries={entries}
-            isExpanded={historySidebarExpanded}
-            onExpandedChange={setHistorySidebarExpanded}
-            onDeleteItem={deleteItem}
-            onDeleteEntry={deleteEntry}
-          />
-        }
-      >
-        <VoiceTypeLogo />
+  if (!user) {
+    return <Login />;
+  }
 
-        <InputSection
-          selectedPrompt={selectedPrompt}
-          onSubmit={submitEntry}
-          onRewriteComplete={addRewriteItem}
-        />
-
-        <div className="mt-12 text-center text-gray-400 text-sm">
-          <p>Type or speak, submit, then rewrite with AI.</p>
-        </div>
-      </CleanLayout>
-    </div>
-  );
+  return <Workspace />;
 };
 
 export default App;

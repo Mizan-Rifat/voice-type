@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { rewriteText } from '../services/open-router';
+import { rewriteText } from '../services/rewrite';
 
 const useRewrite = () => {
   const [output, setOutput] = useState('');
@@ -13,9 +13,7 @@ const useRewrite = () => {
     setError(null);
 
     try {
-      const random = Math.random();
-      const result = inputText + random;
-      // const result = await rewriteText(inputText, promptText);
+      const result = await rewriteText(inputText, promptText);
       setOutput(result);
       return result;
     } catch (err) {
